@@ -284,13 +284,22 @@ namespace MonoGame.Utils.Text
             }
 
             // Calculate row sizes
-            foreach (var (RowText, RowSize) in newRows)
+            for (int i = 0; i < newRows.Count; i++)
             {
+                var (RowText, RowSize) = newRows[i];
+
                 TrimRow(RowText as LinkedList<Word>);
 
                 var rowSize = GetRowSize(RowText);
                 RowSize.Item1 = rowSize.Item1;
                 RowSize.Item2 = rowSize.Item2;
+
+                // If the row is empty, remove it from the text
+                if (rowSize.Item1 <= 0)
+                {
+                    newRows.RemoveAt(i);
+                }
+
             }
 
             return newRows;
@@ -306,7 +315,7 @@ namespace MonoGame.Utils.Text
         {
             if (row.Count > 0)
             {
-                var endWord = new Word("", null, default);
+                var endWord = new Word("", DefaultFont, DefaultColor);
                 Word currentWord;
                 while (row.Count > 0)
                 {
