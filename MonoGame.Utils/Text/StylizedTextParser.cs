@@ -157,7 +157,7 @@ namespace MonoGame.Utils.Text
             {
                 if (RowSize.Item1 < 0 || RowSize.Item2 < 0)
                 {
-                    // If a row is not measured, the text can't be
+                    // If a row is not measured, the text's width can't be
                     return (-1, -1);
                 }
 
@@ -183,7 +183,10 @@ namespace MonoGame.Utils.Text
                 if (word.Font == null)
                 {
                     // If a font is not available, the row can't be measured.
-                    return new MutableTuple<float, float>(-1, -1);
+                    var message = "StylizedTextParser: A font is null and the row" +
+                        " size can therefore not be calculated! " +
+                        "Check that the DefaultFont property is not null!";
+                    throw new NullReferenceException(message);
                 }
 
                 // Row Width
