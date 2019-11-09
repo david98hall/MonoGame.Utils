@@ -17,10 +17,15 @@ namespace MonoGame.Utils.Text
         public Color DefaultColor { get; set; }
 
         public float RowSpacing { get; set; }
+
+        /// <summary>
+        /// The character for declaring a new line.
+        /// </summary>
+        public char NewLine { get; set; }
+
         #endregion
 
         #region Fields
-        private static readonly char newLineChar = '\n';
 
         // Content
         private readonly ContentManager content;
@@ -31,12 +36,26 @@ namespace MonoGame.Utils.Text
             typeof(Color).GetProperties().Where(x => x.PropertyType == typeof(Color));
         #endregion
 
-        public StylizedTextParser(ContentManager content, SpriteFont defaultFont = null, Color defaultColor = default, float rowSpacing = 3)
+        /// <summary>
+        /// Sets values.
+        /// </summary>
+        /// <param name="content">The content manager used to load fonts.</param>
+        /// <param name="defaultFont">The default font if nothing else is specified.</param>
+        /// <param name="defaultColor">The default color if nothing else is specified.</param>
+        /// <param name="rowSpacing">The spacing between rows in parsed text.</param>
+        /// <param name="newLine">The character for declaring a new line.</param>
+        public StylizedTextParser(
+            ContentManager content,
+            SpriteFont defaultFont = null,
+            Color defaultColor = default,
+            float rowSpacing = 3,
+            char newLine = '\n')
         {
             this.content = content;
             DefaultFont = defaultFont;
             DefaultColor = defaultColor;
             RowSpacing = rowSpacing;
+            NewLine = newLine;
         }
 
         #region Public methods
@@ -49,7 +68,7 @@ namespace MonoGame.Utils.Text
             (float Width, float Height) TextSize)
             ParseText(string text)
         {
-            var stylizedText = ParseTextRows(text);
+            var stylizedText = ParseTextRows(text.Trim());
             return (stylizedText, GetTextSize(stylizedText, RowSpacing));
         }
 
@@ -79,8 +98,8 @@ namespace MonoGame.Utils.Text
         public IEnumerable<(IEnumerable<Word> RowText, MutableTuple<float, float> RowSize)>
             ParseTextRows(string text)
         {
-            var rowCount = text.Count(t => t == newLineChar) + 1;
-            text = text.Replace("\r\n", "" + newLineChar).Replace('\r', newLineChar);
+            var rowCount = text.Count(t => t == NewLine) + 1;
+            text = text.Replace("\r\n", "" + NewLine).Replace('\r', NewLine);
 
             // Add empty lists and default tuples
             var stylizedText = new List<(IEnumerable<Word>, MutableTuple<float, float>)>(rowCount);
@@ -98,7 +117,7 @@ namespace MonoGame.Utils.Text
             foreach (var word in stylizedWords)
             {
                 // Split the word into parts where there is a new line
-                string[] wordParts = word.Text.Split(newLineChar);
+                string[] wordParts = word.Text.Split(NewLine);
                 foreach (var wordPart in wordParts)
                 {
                     // Add the word part on the correct row
@@ -187,7 +206,40 @@ namespace MonoGame.Utils.Text
 
         #region Helper methods
 
-        #region Helper parsing methods
+        #region Helper parsing methods        
+        /*
+        // Removes all target chars at the ends of the text
+        private string Trim(string text, char trimTarget)
+        {
+            int firstNonNewLine = -1;
+            int lastNonNewLine = -1;
+            for (int i = 0; i < text.Length; i++)
+            {
+                var leftChar = text[i];
+
+                var j = text.Length - 1 - i;
+                var rightChar = text[j];
+
+                if (firstNonNewLine == -1 && leftChar != trimTarget)
+                {
+                    firstNonNewLine = i;
+                }
+
+                if (lastNonNewLine == -1 && rightChar != trimTarget)
+                {
+                    lastNonNewLine = j;
+                }
+
+                if (firstNonNewLine != -1 && lastNonNewLine != -1)
+                {
+                    break;
+                }
+            }
+
+            return text.Substring(firstNonNewLine, lastNonNewLine - firstNonNewLine + 1);
+        }
+        */
+
         // Fits the text to a max width and remakes the rows if necessary
         private IEnumerable<(IEnumerable<Word> RowText, MutableTuple<float, float> RowSize)>
             FitTextHorizontally(
