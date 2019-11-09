@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
-    <RepositoryUrl>https://github.com/Davuskus/MonoGame.ECS</RepositoryUrl>
+    <RepositoryUrl>https://github.com/Davuskus/MonoGame.Utils</RepositoryUrl>
     <PackageTags>MonoGame, MonoGame.Extended, MonoGame.Extended.Entities, Entities, Extended</PackageTags>
     <Authors>David Hall</Authors>
     <Company>Davuskus</Company>
