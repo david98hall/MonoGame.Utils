@@ -465,7 +465,7 @@ namespace MonoGame.Utils.Text
                     {
                         case Style.COLOR:
                             var tempColor = GetColor(styleValue);
-                            color = new Color(GetColor(styleValue), color.A);
+                            color = new Color(tempColor, tempColor.A);
                             break;
                         case Style.FONT:
                             if (content != null)
