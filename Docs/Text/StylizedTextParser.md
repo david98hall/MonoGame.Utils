@@ -1,6 +1,8 @@
 # How to use [StylizedTextParser](https://github.com/Davuskus/MonoGame.Utils/blob/master/MonoGame.Utils/Text/StylizedTextParser.cs)
 
-StylizedTextParser is a utility class for parsing text with a certain syntax which will be explained below. The syntax allows for a lot of customization within the text, e.g. different fonts, colors and opacities.
+StylizedTextParser is a utility class for parsing text with a certain syntax which will be explained below. The syntax allows for a lot of customization within the text, e.g. different fonts, colors and opacities. It makes it easy to customize text the way you want just by writing it as plain text and inputting it as a string. 
+
+A tip is to put all strings in XML content files and load them via the content manager to avoid taking up a lot of space in the code.
 
 # Syntax examples
 
