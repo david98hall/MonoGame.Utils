@@ -6,7 +6,7 @@ namespace MonoGame.Utils.Geometry
     public static class GeometryUtils
     {
 
-        #region Is a point within an entity?
+        #region Is a point within a polygon?
         // Reference: https://www.geeksforgeeks.org/how-to-check-if-a-given-point-lies-inside-a-polygon/
 
         public static bool IsWithinPolygon(
