@@ -2,8 +2,6 @@
 
 StylizedTextParser is a utility class for parsing text with a certain syntax which will be explained below. The syntax allows for a lot of customization within the text, e.g. different fonts, colors and opacities. It makes it easy to customize text the way you want just by writing it as plain text and inputting it as a string. 
 
-A tip is to put all strings in XML content files and load them via the content manager to avoid taking up a lot of space in the code.
-
 For an example of how to draw the text with MonoGame, see the [MonoGame.ECS](https://github.com/Davuskus/MonoGame.ECS) repository file [RenderSystem.cs](https://github.com/Davuskus/MonoGame.ECS/blob/master/MonoGame.ECS/Systems/RenderSystem.cs).
 
 ## Syntax examples
@@ -42,3 +40,30 @@ There is a method for fitting the text to a certain width, thereby overriding an
 
 #### Fitting the text from Example 1:
 <img src="Assets/fitted_stylized_text.jpg" width="40%">
+
+## Tips
+
+### Strings in XML content files
+A tip is to put all strings in XML content files and load them via the content manager to avoid taking up a lot of space in the code.
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<XnaContent xmlns:ns="Microsoft.Xna.Framework">
+  <Asset Type="System.Collections.Generic.Dictionary[System.String, System.String]">
+    <Item>
+      <Key>Example1</Key>
+      <Value>
+        {Hello[color=Green]}, {World![color=Magenta, font = silkscreen20, opacity=0.75]}
+        {My [color=Red]} name is David.
+        {Goodbye! [color=lime green]} [font=silkscreen48, color=Blue]
+      </Value>
+    </Item>
+    <Item>
+      <Key>PlayButton</Key>
+      <Value>
+        Play Game[font=silkscreen48, color=black]
+      </Value>
+    </Item>
+  </Asset>
+</XnaContent>
+```
