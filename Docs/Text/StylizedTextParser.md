@@ -4,7 +4,7 @@ StylizedTextParser is a utility class for parsing text with a certain syntax whi
 
 A tip is to put all strings in XML content files and load them via the content manager to avoid taking up a lot of space in the code.
 
-# Syntax examples
+## Syntax examples
 
 ### Example 1:
 ```
@@ -28,14 +28,14 @@ Play Game
 #### Appearance when rendered with MonoGame:
 <img src="Assets/stylized_text3.jpg" width="40%">
 
-# Parsing
+## Parsing
 The parser will look for braced areas, find the so called "style blocks" (surrounded by brackets), extract the specified styles (their order do not matter) and apply them to the other text within the braced area. Text that does not have a style block gets the default style which can be configured. Style blocks affect text to their left. 
 
 New lines are by default defined with actual new lines (\n) but this can be configured as well.
 
 The output from the parsing methods is a list of different "rows" containing all of the stylized words ready for rendering with MonoGame.
 
-## Fitting to a certain width
+### Fitting to a certain width
 There is a method for fitting the text to a certain width, thereby overriding any new lines in the original input text if necessary.
 
 #### Fitting the text from Example 1:
