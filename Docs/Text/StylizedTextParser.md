@@ -8,7 +8,7 @@ StylizedTextParser is a utility class for parsing text with a certain syntax whi
 ```
 {Hello[color=Green]}, {World![color=Magenta, font = silkscreen20, opacity=0.75]}
 {My [color=Red]} name is David.
-{Goodbye! [color=lime green]} [color=Blue,font=silkscreen48]
+{Goodbye! [color=lime green]} [font=silkscreen48, color=Blue]
 ```
 ### Example 2:
 ```
@@ -27,7 +27,9 @@ Play Game
 <img src="Assets/stylized_text3.jpg" width="40%">
 
 # Parsing
-The parser will look for braced areas, find the so called "style blocks" (surrounded by brackets), extract the specified styles and apply them to the other text within the braced area. Text that does not have a style block gets the default style which can be configured. The style blocks affect text to their left. New lines are by default defined with actual new lines (\n) but this can be configured as well.
+The parser will look for braced areas, find the so called "style blocks" (surrounded by brackets), extract the specified styles (their order do not matter) and apply them to the other text within the braced area. Text that does not have a style block gets the default style which can be configured. Style blocks affect text to their left. 
+
+New lines are by default defined with actual new lines (\n) but this can be configured as well.
 
 The output from the parsing methods is a list of different "rows" containing all of the stylized words ready for rendering with MonoGame.
 
