@@ -2,7 +2,7 @@
 
 StylizedTextParser is a utility class for parsing text with a certain syntax which will be explained below. The syntax allows for a lot of customization within the text, e.g. different fonts, colors and opacities. It makes it easy to customize text the way you want just by writing it as plain text and inputting it as a string.
 
-For an example of how to draw the text with MonoGame, see the [MonoGame.ECS](https://github.com/Davuskus/MonoGame.ECS) repository file [RenderSystem.cs](https://github.com/Davuskus/MonoGame.ECS/blob/master/MonoGame.ECS/Systems/RenderSystem.cs).
+For an example of how to draw the stylized text with MonoGame, see the [MonoGame.ECS](https://github.com/Davuskus/MonoGame.ECS) repository file [RenderSystem.cs](https://github.com/Davuskus/MonoGame.ECS/blob/master/MonoGame.ECS/Systems/RenderSystem.cs).
 
 ## Syntax examples
 
