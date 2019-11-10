@@ -4,6 +4,8 @@ StylizedTextParser is a utility class for parsing text with a certain syntax whi
 
 A tip is to put all strings in XML content files and load them via the content manager to avoid taking up a lot of space in the code.
 
+For an example of how to draw the text with MonoGame, see the [MonoGame.ECS](https://github.com/Davuskus/MonoGame.ECS) repository file [RenderSystem.cs](https://github.com/Davuskus/MonoGame.ECS/blob/master/MonoGame.ECS/Systems/RenderSystem.cs).
+
 ## Syntax examples
 
 ### Example 1:
