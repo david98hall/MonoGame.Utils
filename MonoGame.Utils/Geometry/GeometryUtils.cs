@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using MonoGame.Extended.Shapes;
 using System;
 
 namespace MonoGame.Utils.Geometry
@@ -45,15 +46,13 @@ namespace MonoGame.Utils.Geometry
 
         #endregion
 
-        #region Is a point within a polygon?
+        #region Polygon
         // Reference: https://www.geeksforgeeks.org/how-to-check-if-a-given-point-lies-inside-a-polygon/
 
         public static bool IsWithinPolygon(
             Vector2 point,
             Vector2[] vertices,
-            Vector2 polygonPosition,
-            float polygonMaxWidth,
-            float polygonMaxHeight)
+            Vector2 polygonPosition)
         {
             var vertexCount = vertices.Length;
 
@@ -63,8 +62,9 @@ namespace MonoGame.Utils.Geometry
                 return false;
             }
 
-            var bodyRight = polygonPosition.X + polygonMaxWidth;
-            var bodyBottom = polygonPosition.Y + polygonMaxHeight;
+            var polygon = new Polygon(vertices);
+            var bodyRight = polygonPosition.X + polygon.BoundingRectangle.Width;
+            var bodyBottom = polygonPosition.Y + polygon.BoundingRectangle.Height;
 
             var inHorizontalBounds = polygonPosition.X <= point.X && point.X <= bodyRight;
             var inVerticalBounds = polygonPosition.Y <= point.Y && point.Y <= bodyBottom;

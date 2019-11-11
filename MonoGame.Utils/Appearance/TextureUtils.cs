@@ -11,6 +11,7 @@ namespace MonoGame.Utils.Appearance
 
         private delegate bool IsPointInShape(Vector2 point);
 
+        #region Ellipses
         public static Texture2D CreateFilledEllipseTexture(
             float horizontalRadius,
             float verticalRadius,
@@ -26,14 +27,6 @@ namespace MonoGame.Utils.Appearance
                     new Vector2(0, 0)
                 );
             });
-        }
-
-        public static Texture2D CreateFilledCircleTexture(
-            float radius,
-            Color color,
-            GraphicsDevice graphicsDevice)
-        {
-            return CreateFilledEllipseTexture(radius, radius, color, graphicsDevice);
         }
 
         public static Texture2D CreateEllipseOutlineTexture(
@@ -55,6 +48,15 @@ namespace MonoGame.Utils.Appearance
             });
         }
 
+        #region Circles
+        public static Texture2D CreateFilledCircleTexture(
+            float radius,
+            Color color,
+            GraphicsDevice graphicsDevice)
+        {
+            return CreateFilledEllipseTexture(radius, radius, color, graphicsDevice);
+        }
+
         public static Texture2D CreateCircleOutlineTexture(
             float radius,
             float outlineThickness,
@@ -63,24 +65,33 @@ namespace MonoGame.Utils.Appearance
         {
             return CreateEllipseOutlineTexture(radius, radius, outlineThickness, color, graphicsDevice);
         }
+        #endregion
 
+        #endregion
+
+        #region Polygons
         public static Texture2D CreatePolygonTexture(Vector2[] vertices, Color color, GraphicsDevice graphicsDevice)
         {
             var polygon = new Polygon(vertices);
             var maxWidth = polygon.Right - polygon.Left;
             var maxHeight = polygon.Bottom - polygon.Top;
-            return CreateShapeTexture(maxWidth, maxHeight, color, graphicsDevice, point =>
-            {
-                return GeometryUtils.IsWithinPolygon(
-                    point,
-                    vertices,
-                    new Vector2(0, 0),
-                    maxWidth,
-                    maxHeight
-                );
-            });
+            return CreateShapeTexture(maxWidth, maxHeight, color, graphicsDevice,
+                point => GeometryUtils.IsWithinPolygon(point, vertices, new Vector2(0, 0)));
         }
 
+        public static Texture2D CreatePolygonTexture(Polygon polygon, Color color, GraphicsDevice graphicsDevice)
+        {
+            return CreatePolygonTexture(polygon.Vertices, color, graphicsDevice);
+        }
+
+        public static Texture2D CreateRectangleTexture(float width, float height, Color color, GraphicsDevice graphicsDevice)
+        {
+            var rect = new RectangleF(0, 0, width, height);
+            return CreatePolygonTexture(rect.GetCorners(), color, graphicsDevice);
+        }
+        #endregion
+
+        // Creates arbitrary shape textures depending on the passed IsPointInShape delegate
         private static Texture2D CreateShapeTexture(
             float maxWidth,
             float maxHeight,
@@ -119,19 +130,6 @@ namespace MonoGame.Utils.Appearance
             texture.SetData(data);
 
             return texture;
-        }
-
-        public static Texture2D CreatePolygonTexture(Polygon polygon, Color color, GraphicsDevice graphicsDevice)
-        {
-            var maxWidth = polygon.Right - polygon.Left;
-            var maxHeight = polygon.Bottom - polygon.Top;
-            return CreatePolygonTexture(polygon.Vertices, color, graphicsDevice);
-        }
-
-        public static Texture2D CreateRectangleTexture(float width, float height, Color color, GraphicsDevice graphicsDevice)
-        {
-            var rect = new RectangleF(0, 0, width, height);
-            return CreatePolygonTexture(rect.GetCorners(), color, graphicsDevice);
         }
 
     }
