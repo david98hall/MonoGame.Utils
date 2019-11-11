@@ -23,6 +23,8 @@ namespace MonoGame.Utils.Text
         /// </summary>
         public char NewLine { get; set; }
 
+        public char EscapeCharacter { get; set; }
+
         #endregion
 
         #region Fields
@@ -49,13 +51,15 @@ namespace MonoGame.Utils.Text
             SpriteFont defaultFont = null,
             Color defaultColor = default,
             float rowSpacing = 3,
-            char newLine = '\n')
+            char newLine = '\n',
+            char escapeCharacter = '\\')
         {
             this.content = content;
             DefaultFont = defaultFont;
             DefaultColor = defaultColor;
             RowSpacing = rowSpacing;
             NewLine = newLine;
+            EscapeCharacter = escapeCharacter;
         }
 
         #region Public methods
@@ -133,12 +137,22 @@ namespace MonoGame.Utils.Text
                 rowIndex--;
             }
 
-            // Calculate each row size
             foreach (var row in stylizedText)
             {
+                // Calculate each row size
                 var rowSize = GetRowSize(row.Item1);
                 row.Item2.Item1 = rowSize.Item1;
                 row.Item2.Item2 = rowSize.Item2;
+
+                // Remove any escape hatches
+                foreach (var word in row.Item1)
+                {
+                    word.Text = word.Text.Replace(EscapeCharacter + "{", "{");
+                    word.Text = word.Text.Replace(EscapeCharacter + "}", "}");
+                    word.Text = word.Text.Replace(EscapeCharacter + "[", "[");
+                    word.Text = word.Text.Replace(EscapeCharacter + "]", "]");
+                }
+
             }
 
             return stylizedText;
@@ -377,8 +391,8 @@ namespace MonoGame.Utils.Text
         {
             var stylizedWords = new List<Word>();
 
-            var startBraceCount = word.Text.Count(t => t == '{') - word.Text.Count("\\{");
-            var endBraceCount = word.Text.Count(t => t == '}') - word.Text.Count("\\}");
+            var startBraceCount = word.Text.Count(t => t == '{') - word.Text.Count(EscapeCharacter + "{");
+            var endBraceCount = word.Text.Count(t => t == '}') - word.Text.Count(EscapeCharacter + "}");
             if (startBraceCount == 0 || endBraceCount == 0)
             {
                 stylizedWords.AddRange(ParseStyle(word.Text, word.Font, word.Color));
@@ -392,10 +406,11 @@ namespace MonoGame.Utils.Text
             {
                 char c = word.Text[i];
 
-                var previousCharIsBackslash = i > 0 && previousChar == '\\';
-                var firstCharOrNotBackslash = i == 0 || !previousCharIsBackslash;
-                var startOfBracedArea = c == '{' && firstCharOrNotBackslash;
-                var endOfBracedArea = c == '}' && latestStartBrace > -1 && firstCharOrNotBackslash;
+                // Check for braced area without escape characters
+                var previousWasEscapeChar = i > 0 && previousChar == EscapeCharacter;
+                var firstCharOrNotEscapeChar = i == 0 || !previousWasEscapeChar;
+                var startOfBracedArea = c == '{' && firstCharOrNotEscapeChar;
+                var endOfBracedArea = c == '}' && latestStartBrace > -1 && firstCharOrNotEscapeChar;
 
                 if (startOfBracedArea)
                 {
@@ -439,82 +454,139 @@ namespace MonoGame.Utils.Text
             return stylizedWords;
         }
 
+        private (int LastStartBracket, int LastEndBracket) FindLastStyleBlock(string text)
+        {
+            int lastStartBracket = -1;
+            int lastEndBracket = -1;
+            var previousChar = '§';
+            for (int i = 0; i < text.Length; i++)
+            {
+                var c = text[i];
+
+                // Check for block without escape characters
+                var previousWasEscapeChar = i > 0 && previousChar == EscapeCharacter;
+                var firstCharOrNotEscapeChar = i == 0 || !previousWasEscapeChar;
+                var startOfBlock = c == '[' && firstCharOrNotEscapeChar;
+                var endOfBlock = c == ']' && lastStartBracket != -1 && firstCharOrNotEscapeChar;
+                if (startOfBlock)
+                {
+                    lastStartBracket = i;
+                }
+                else if (endOfBlock)
+                {
+                    lastEndBracket = i;
+                }
+
+                previousChar = c;
+            }
+
+            var nothingFound = lastStartBracket < 0 || lastEndBracket < 0;
+            var wrongBracketOrder = lastStartBracket < 0 || lastEndBracket < 0 || lastStartBracket > lastEndBracket;
+            if (nothingFound || wrongBracketOrder)
+            {
+                return (-1, -1);
+            }
+
+            return (lastStartBracket, lastEndBracket);
+        }
+
         private IEnumerable<Word> ParseStyle(string text, SpriteFont parentFont, Color parentColor)
         {
-            // Bracket indexes
-            var lastStartBracket = text.LastIndexOf('[');
-            var lastEndBracket = text.LastIndexOf(']');
+            // Try to look for the last style block
+            var (LastStartBracket, LastEndBracket) = FindLastStyleBlock(text);
+
+            // TODO If there was no style block, return the text with its parent's style.
 
             // If there is no style block in the text, return the text with the style of its parent text
-            if (lastStartBracket < 0 || lastEndBracket < 0 || lastStartBracket > lastEndBracket)
+            if (LastStartBracket < 0 || LastEndBracket < 0)
             {
                 return new Word[] { new Word(text, parentFont, parentColor) };
             }
 
-            #region Set text styles
-
             // Extract styles
-            var styleText = text.Substring(lastStartBracket + 1, lastEndBracket - lastStartBracket - 1);
+            var styleText = text.Substring(LastStartBracket + 1, LastEndBracket - LastStartBracket - 1);
             var styles = Regex.Replace(styleText, @"\s", "").Split(',');
             if (styles.Length == 0)
             {
                 return new Word[] { new Word(text, parentFont, parentColor) };
             }
 
-            // Styles
+            // Try to extract styles
+            try
+            {
+                var (Font, Color) = ExtractStyles(styles, parentFont, parentColor);
+
+                #region Only style whatever is left of the style block
+                // Split at style block. The reason for this is to only style text left to the style block
+                var styleBlock = $"[{styleText}]";
+                var styleBlockIndex = text.IndexOf(styleBlock);
+                var leftPart = text.Substring(0, styleBlockIndex);
+
+                // Check if there is a text part right of the style block
+                int rightIndex = styleBlockIndex + styleBlock.Length + 1;
+                bool rightPartExists = rightIndex < text.Length;
+
+                // Add the text left of the style block and any right text if there is any
+                var partCount = rightPartExists ? 2 : 1;
+                var stylizedParts = new Word[partCount];
+                stylizedParts[0] = new Word(leftPart, Font, Color);
+
+                if (rightPartExists)
+                {
+                    var rightPart = text.Substring(rightIndex);
+                    stylizedParts[1] = new Word(rightPart, DefaultFont, DefaultColor);
+                }
+                #endregion
+
+                return stylizedParts;
+            }
+            catch (Exception)
+            {
+            }
+
+            // No styles found, return the original text
+            return new Word[] { new Word(text, parentFont, parentColor) };
+        }
+
+        private (SpriteFont Font, Color Color) ExtractStyles(string[] styles, SpriteFont parentFont, Color parentColor)
+        {
             var font = parentFont;
             var color = parentColor;
 
             foreach (var s in styles)
             {
-                var styleName = s.Substring(0, s.LastIndexOf('='));
-                var styleValue = s.Substring(styleName.Length + 1, s.Length - styleName.Length - 1);
-
-                if (Enum.TryParse(styleName.ToUpper(), out Style style))
+                try
                 {
-                    switch (style)
+                    var styleName = s.Substring(0, s.LastIndexOf('='));
+                    var styleValue = s.Substring(styleName.Length + 1, s.Length - styleName.Length - 1);
+
+                    if (Enum.TryParse(styleName.ToUpper(), out Style style))
                     {
-                        case Style.COLOR:
-                            var tempColor = GetColor(styleValue);
-                            color = new Color(tempColor, tempColor.A);
-                            break;
-                        case Style.FONT:
-                            if (content != null)
-                                font = content.Load<SpriteFont>(FontContentDirectory + styleValue);
-                            break;
-                        case Style.OPACITY:
-                            color = new Color(color, float.Parse(styleValue));
-                            break;
-                        default:
-                            break;
+                        switch (style)
+                        {
+                            case Style.COLOR:
+                                var tempColor = GetColor(styleValue);
+                                color = new Color(tempColor, tempColor.A);
+                                break;
+                            case Style.FONT:
+                                if (content != null)
+                                    font = content.Load<SpriteFont>(FontContentDirectory + styleValue);
+                                break;
+                            case Style.OPACITY:
+                                color = new Color(color, float.Parse(styleValue));
+                                break;
+                            default:
+                                break;
+                        }
                     }
                 }
+                catch (Exception)
+                {
+                    throw new Exception("Exception: Unidentifiable style!");
+                }
             }
-            #endregion
 
-            #region Only style whatever is left of the style block
-            // Split at style block. The reason for this is to only style text left to the style block
-            var styleBlock = $"[{styleText}]";
-            var styleBlockIndex = text.IndexOf(styleBlock);
-            var leftPart = text.Substring(0, styleBlockIndex);
-
-            // Check if there is a text part right of the style block
-            int rightIndex = styleBlockIndex + styleBlock.Length + 1;
-            bool rightPartExists = rightIndex < text.Length;
-
-            // Add the text left of the style block and any right text if there is any
-            var partCount = rightPartExists ? 2 : 1;
-            var stylizedParts = new Word[partCount];
-            stylizedParts[0] = new Word(leftPart, font, color);
-
-            if (rightPartExists)
-            {
-                var rightPart = text.Substring(rightIndex);
-                stylizedParts[1] = new Word(rightPart, DefaultFont, DefaultColor);
-            }
-            #endregion
-
-            return stylizedParts;
+            return (font, color);
         }
         #endregion
 
@@ -537,8 +609,7 @@ namespace MonoGame.Utils.Text
                 }
             }
 
-            // If such a color is not found, return the default
-            return DefaultColor;
+            throw new ArgumentException("A color with that name does not exist!");
         }
         #endregion
 
@@ -547,7 +618,7 @@ namespace MonoGame.Utils.Text
             COLOR, FONT, OPACITY
         }
 
-        public struct Word
+        public class Word
         {
 
             public string Text { get; set; }
