@@ -102,6 +102,11 @@ namespace MonoGame.Utils.Text
             return stylizedText;
         }
 
+        public IEnumerable<Word> ParseWords(string text)
+        {
+            return ParseWords(new Word(text, DefaultFont, DefaultColor));
+        }
+
         public static (float Width, float Height) GetTextSize(
             IEnumerable<(IEnumerable<Word> RowText,
             MutableTuple<float, float> RowSize)> text,

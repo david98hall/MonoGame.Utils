@@ -136,11 +136,6 @@ namespace MonoGame.Utils.Text
             }
         }
 
-        public IEnumerable<Word> ParseWords(string text)
-        {
-            return ParseWords(new Word(text, DefaultFont, DefaultColor));
-        }
-
         private IEnumerable<Word> ParseWords(Word word)
         {
             var stylizedWords = new List<Word>();
