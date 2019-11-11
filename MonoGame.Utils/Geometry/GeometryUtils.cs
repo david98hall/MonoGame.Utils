@@ -6,6 +6,24 @@ namespace MonoGame.Utils.Geometry
     public static class GeometryUtils
     {
 
+        #region Ellipse
+
+        public static bool IsWithinEllipse(
+            Vector2 point,
+            float horizontalRadius,
+            float verticalRadius,
+            float scale,
+            Vector2 ellipsePosition)
+        {
+            // TODO Does not work! Fix it!
+            var term1 = Math.Pow(point.X - ellipsePosition.X + horizontalRadius, 2) / (horizontalRadius * horizontalRadius);
+            var term2 = Math.Pow(point.Y - ellipsePosition.Y + verticalRadius, 2) / (verticalRadius * verticalRadius);
+            var scaleSquared = scale * scale;
+            return term1 + term2 <= scaleSquared;
+        }
+
+        #endregion
+
         #region Is a point within a polygon?
         // Reference: https://www.geeksforgeeks.org/how-to-check-if-a-given-point-lies-inside-a-polygon/
 
