@@ -377,8 +377,8 @@ namespace MonoGame.Utils.Text
         {
             var stylizedWords = new List<Word>();
 
-            var startBraceCount = word.Text.Count(t => t == '{');
-            var endBraceCount = word.Text.Count(t => t == '}');
+            var startBraceCount = word.Text.Count(t => t == '{') - word.Text.Count("\\{");
+            var endBraceCount = word.Text.Count(t => t == '}') - word.Text.Count("\\}");
             if (startBraceCount == 0 || endBraceCount == 0)
             {
                 stylizedWords.AddRange(ParseStyle(word.Text, word.Font, word.Color));
@@ -387,15 +387,21 @@ namespace MonoGame.Utils.Text
 
             var latestStartBrace = -1;
 
+            char previousChar = '§';
             for (int i = 0; i < word.Text.Length; i++)
             {
                 char c = word.Text[i];
 
-                if (c == '{')
+                var previousCharIsBackslash = i > 0 && previousChar == '\\';
+                var firstCharOrNotBackslash = i == 0 || !previousCharIsBackslash;
+                var startOfBracedArea = c == '{' && firstCharOrNotBackslash;
+                var endOfBracedArea = c == '}' && latestStartBrace > -1 && firstCharOrNotBackslash;
+
+                if (startOfBracedArea)
                 {
                     latestStartBrace = i;
                 }
-                else if (c == '}' && latestStartBrace > -1)
+                else if (endOfBracedArea)
                 {
                     // Parse the words to the right of the braced area
                     var rightPart = ParseWords(new Word(word.Text.Substring(i + 1), word.Font, word.Color));
@@ -426,6 +432,8 @@ namespace MonoGame.Utils.Text
 
                     break;
                 }
+
+                previousChar = c;
             }
 
             return stylizedWords;
