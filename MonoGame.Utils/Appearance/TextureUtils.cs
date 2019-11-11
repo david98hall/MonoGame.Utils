@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
 using MonoGame.Extended.Shapes;
 using MonoGame.Utils.Geometry;
-using System;
 
 namespace MonoGame.Utils.Appearance
 {
@@ -12,23 +11,57 @@ namespace MonoGame.Utils.Appearance
 
         private delegate bool IsPointInShape(Vector2 point);
 
-        public static Texture2D CreateEllipseTexture(
+        public static Texture2D CreateFilledEllipseTexture(
             float horizontalRadius,
             float verticalRadius,
-            float scale,
             Color color,
             GraphicsDevice graphicsDevice)
         {
-            return CreateShapeTexture(horizontalRadius, verticalRadius, color, graphicsDevice, point =>
+            return CreateShapeTexture(2 * horizontalRadius, 2 * verticalRadius, color, graphicsDevice, point =>
             {
                 return GeometryUtils.IsWithinEllipse(
                     point,
                     horizontalRadius,
                     verticalRadius,
-                    scale,
                     new Vector2(0, 0)
                 );
             });
+        }
+
+        public static Texture2D CreateFilledCircleTexture(
+            float radius,
+            Color color,
+            GraphicsDevice graphicsDevice)
+        {
+            return CreateFilledEllipseTexture(radius, radius, color, graphicsDevice);
+        }
+
+        public static Texture2D CreateEllipseOutlineTexture(
+            float horizontalRadius,
+            float verticalRadius,
+            float outlineThickness,
+            Color color,
+            GraphicsDevice graphicsDevice)
+        {
+            return CreateShapeTexture(2 * horizontalRadius, 2 * verticalRadius, color, graphicsDevice, point =>
+            {
+                return GeometryUtils.IsOnEllipseOutline(
+                    point,
+                    horizontalRadius,
+                    verticalRadius,
+                    outlineThickness,
+                    new Vector2(0, 0)
+                );
+            });
+        }
+
+        public static Texture2D CreateCircleOutlineTexture(
+            float radius,
+            float outlineThickness,
+            Color color,
+            GraphicsDevice graphicsDevice)
+        {
+            return CreateEllipseOutlineTexture(radius, radius, outlineThickness, color, graphicsDevice);
         }
 
         public static Texture2D CreatePolygonTexture(Vector2[] vertices, Color color, GraphicsDevice graphicsDevice)

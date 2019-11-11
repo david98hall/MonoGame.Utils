@@ -12,14 +12,35 @@ namespace MonoGame.Utils.Geometry
             Vector2 point,
             float horizontalRadius,
             float verticalRadius,
-            float scale,
             Vector2 ellipsePosition)
         {
-            // TODO Does not work! Fix it!
-            var term1 = Math.Pow(point.X - ellipsePosition.X + horizontalRadius, 2) / (horizontalRadius * horizontalRadius);
-            var term2 = Math.Pow(point.Y - ellipsePosition.Y + verticalRadius, 2) / (verticalRadius * verticalRadius);
-            var scaleSquared = scale * scale;
-            return term1 + term2 <= scaleSquared;
+            var term1 = Math.Pow(point.X - ellipsePosition.X - horizontalRadius, 2) / (horizontalRadius * horizontalRadius);
+            var term2 = Math.Pow(point.Y - ellipsePosition.Y - verticalRadius, 2) / (verticalRadius * verticalRadius);
+            return term1 + term2 <= 1;
+        }
+
+        public static bool IsOnEllipseOutline(
+            Vector2 point,
+            float horizontalRadius,
+            float verticalRadius,
+            float outlineThickness,
+            Vector2 ellipsePosition)
+        {
+            // Big ellipse
+            var bigEllipseTerm1 = Math.Pow(point.X - ellipsePosition.X - horizontalRadius, 2) / (horizontalRadius * horizontalRadius);
+            var bigEllipseTerm2 = Math.Pow(point.Y - ellipsePosition.Y - verticalRadius, 2) / (verticalRadius * verticalRadius);
+            var insideBigEllipse = bigEllipseTerm1 + bigEllipseTerm2 <= 1;
+
+            // Small ellipse
+            var smallHorizontalRadius = horizontalRadius - outlineThickness;
+            var smallVerticalRadius = verticalRadius - outlineThickness;
+            var smallEllipseTerm1 = Math.Pow(point.X - outlineThickness - ellipsePosition.X - smallHorizontalRadius, 2)
+                / (smallHorizontalRadius * smallHorizontalRadius);
+            var smallEllipseTerm2 = Math.Pow(point.Y - outlineThickness - ellipsePosition.Y - smallVerticalRadius, 2)
+                / (smallVerticalRadius * smallVerticalRadius);
+            var insideSmallEllipse = smallEllipseTerm1 + smallEllipseTerm2 <= 1;
+
+            return insideBigEllipse && !insideSmallEllipse;
         }
 
         #endregion
@@ -123,8 +144,9 @@ namespace MonoGame.Utils.Geometry
             int o3 = GetOrientation(p2, q2, p1);
             int o4 = GetOrientation(p2, q2, q1);
 
-            return o1 != o2 && o3 != o4 // General case 
-                                        // p1, q1 and p2 are colinear and p2 lies on segment p1q1 
+            // First row: General case 
+            return o1 != o2 && o3 != o4
+                // p1, q1 and p2 are colinear and p2 lies on segment p1q1 
                 || o1 == 0 && OnSegment(p1, p2, q1)
                 // p1, q1 and p2 are colinear and q2 lies on segment p1q1 
                 || o2 == 0 && OnSegment(p1, q2, q1)
