@@ -9,8 +9,8 @@ For an example of how to draw the stylized text with MonoGame, see the [MonoGame
 ### Example 1:
 ```
 {Hello[color=Green]}, {World![color=Magenta, font = silkscreen20, opacity=0.75]}
-{My [color=Red]} name is David.
-{Goodbye! [color=lime green]} [font=silkscreen48, color=Blue]
+{My [color=Red]}name is David.
+{Goodbye![color=lime green]}[font=silkscreen48, color=Blue]
 ```
 ### Example 2:
 ```
