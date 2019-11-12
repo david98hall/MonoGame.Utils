@@ -73,6 +73,8 @@ namespace MonoGame.Utils.Text
                     var textRow = stylizedText[rowIndex].Item1 as LinkedList<Word>;
                     textRow.AddLast(new Word(wordPart, word.Font, word.Color));
 
+                    TrimRow(textRow);
+
                     // Go to the next row
                     rowIndex++;
                 }

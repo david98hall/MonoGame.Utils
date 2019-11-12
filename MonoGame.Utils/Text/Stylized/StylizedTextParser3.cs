@@ -70,8 +70,6 @@ namespace MonoGame.Utils.Text
                 ? new LinkedList<Word>()
                 : new LinkedList<Word>(rows[currentRowIndex].RowText);
 
-            TrimRow(currentRowCopy);
-
             var noRemainingWords = remainingWords == null || remainingWords.Count() == 0;
             if (noRemainingWords)
             {
