@@ -66,13 +66,12 @@ namespace MonoGame.Utils.Text
             var rowIndex = 0;
             foreach (var word in stylizedWords)
             {
-                var textRow = stylizedText[rowIndex].Item1 as LinkedList<Word>;
-
                 // Split the word into parts where there is a new line
                 string[] wordParts = word.Text.Split(NewLine);
                 foreach (var wordPart in wordParts)
                 {
                     // Add the word part on the correct row
+                    var textRow = stylizedText[rowIndex].RowText as LinkedList<Word>;
                     textRow.AddLast(new Word(wordPart, word.Font, word.Color));
 
                     // Go to the next row
@@ -84,8 +83,10 @@ namespace MonoGame.Utils.Text
                 rowIndex--;
             }
 
-            foreach (var (RowText, RowSize) in stylizedText)
+            for (int i = 0; i < stylizedText.Count; i++)
             {
+                var (RowText, RowSize) = stylizedText[i];
+
                 // Remove any escape hatches
                 foreach (var word in RowText)
                 {
@@ -101,6 +102,13 @@ namespace MonoGame.Utils.Text
                 var rowSize = GetRowSize(RowText);
                 RowSize.Item1 = rowSize.Item1;
                 RowSize.Item2 = rowSize.Item2;
+
+                // If the row is empty, remove it
+                if (RowSize.Item1 <= 0)
+                {
+                    stylizedText.RemoveAt(i);
+                    i--;
+                }
             }
 
             return stylizedText;

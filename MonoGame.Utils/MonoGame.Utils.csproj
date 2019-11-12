@@ -10,7 +10,7 @@
     <Company>Davuskus</Company>
     <Description>Various MonoGame utilities.</Description>
     <Copyright>David Hall</Copyright>
-    <Version>1.0.7</Version>
+    <Version>1.0.8</Version>
   </PropertyGroup>
 
   <ItemGroup>
