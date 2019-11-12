@@ -16,7 +16,7 @@ namespace MonoGame.Utils.Text
             (float Width, float Height) TextSize)
             ParseText(string text)
         {
-            var stylizedText = ParseTextRows(text.Trim());
+            var stylizedText = ParseTextRows(text);
             return (stylizedText, GetTextSize(stylizedText, RowSpacing));
         }
 
@@ -51,7 +51,8 @@ namespace MonoGame.Utils.Text
             text = text.Replace("\r\n", "" + NewLine).Replace('\r', NewLine);
 
             // Add empty lists and default tuples
-            var stylizedText = new List<(IEnumerable<Word>, MutableTuple<float, float>)>(rowCount);
+            var stylizedText =
+                new List<(IEnumerable<Word> RowText, MutableTuple<float, float> RowSize)>(rowCount);
             for (int i = 0; i < rowCount; i++)
             {
                 stylizedText.Add((
@@ -65,15 +66,14 @@ namespace MonoGame.Utils.Text
             var rowIndex = 0;
             foreach (var word in stylizedWords)
             {
+                var textRow = stylizedText[rowIndex].Item1 as LinkedList<Word>;
+
                 // Split the word into parts where there is a new line
                 string[] wordParts = word.Text.Split(NewLine);
                 foreach (var wordPart in wordParts)
                 {
                     // Add the word part on the correct row
-                    var textRow = stylizedText[rowIndex].Item1 as LinkedList<Word>;
                     textRow.AddLast(new Word(wordPart, word.Font, word.Color));
-
-                    TrimRow(textRow);
 
                     // Go to the next row
                     rowIndex++;
@@ -84,15 +84,10 @@ namespace MonoGame.Utils.Text
                 rowIndex--;
             }
 
-            foreach (var row in stylizedText)
+            foreach (var (RowText, RowSize) in stylizedText)
             {
-                // Calculate each row size
-                var rowSize = GetRowSize(row.Item1);
-                row.Item2.Item1 = rowSize.Item1;
-                row.Item2.Item2 = rowSize.Item2;
-
                 // Remove any escape hatches
-                foreach (var word in row.Item1)
+                foreach (var word in RowText)
                 {
                     word.Text = word.Text.Replace(EscapeCharacter + "{", "{");
                     word.Text = word.Text.Replace(EscapeCharacter + "}", "}");
@@ -100,6 +95,12 @@ namespace MonoGame.Utils.Text
                     word.Text = word.Text.Replace(EscapeCharacter + "]", "]");
                 }
 
+                TrimRow(RowText as LinkedList<Word>);
+
+                // Calculate each row size
+                var rowSize = GetRowSize(RowText);
+                RowSize.Item1 = rowSize.Item1;
+                RowSize.Item2 = rowSize.Item2;
             }
 
             return stylizedText;
