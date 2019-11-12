@@ -41,7 +41,7 @@ The output from the parsing methods is a list of different "rows" containing all
 There is a method for fitting the text to a certain width, thereby overriding any new lines in the original input text if necessary.
 
 #### Fitting the text from Example 1:
-<img src="Assets/fitted_stylized_text.jpg" width="40%">
+<img src="Assets/stylized_text1.jpg" width="40%">
 
 ## Tips
 
@@ -56,8 +56,8 @@ A tip is to put all strings in XML content files and load them via the content m
       <Key>Example1</Key>
       <Value>
         {Hello[color=Green]}, {World![color=Magenta, font = silkscreen20, opacity=0.75]}
-        {My [color=Red]} name is David.
-        {Goodbye! [color=lime green]} [font=silkscreen48, color=Blue]
+        {My [color=Red]}name is David.
+        {Goodbye![color=lime green]}[font=silkscreen48, color=Blue]
       </Value>
     </Item>
     <Item>
