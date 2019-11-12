@@ -14,66 +14,160 @@ namespace MonoGame.Utils.Text
         // Fits the text to a max width and remakes the rows if necessary
         private IEnumerable<(IEnumerable<Word> RowText, MutableTuple<float, float> RowSize)>
             FitTextHorizontally(
-                IEnumerable<(IEnumerable<Word> RowText, MutableTuple<float, float> RowSize)> rows,
+                List<(IEnumerable<Word> RowText, MutableTuple<float, float> RowSize)> rows,
                 float maxWidth)
         {
-            var newRows =
-                new List<(IEnumerable<Word> RowText, MutableTuple<float, float> RowSize)>(
-                    rows.Count())
-                {
-                    (new LinkedList<Word>(), new MutableTuple<float, float>(0, 0))
-                };
+            var newRows = new LinkedList<(IEnumerable<Word> RowText, MutableTuple<float, float>)>();
+            newRows.AddFirst((new LinkedList<Word>(), new MutableTuple<float, float>(0, 0)));
 
-            // Build rows
-            float rowWidth = 0;
-            foreach (var (RowText, RowSize) in rows)
+            FitTextHorizontally(rows, 0, newRows, maxWidth, null);
+
+            var emptyRows = new HashSet<(IEnumerable<Word> RowText, MutableTuple<float, float> RowSize)>();
+            foreach (var row in newRows)
             {
-                foreach (var word in RowText)
-                {
-                    if (word.Text.Length > 0)
-                    {
-                        var wordWidth = word.Font.MeasureString(word.Text).X;
-                        var wordText = word.Text;
-                        var newRowWidth = rowWidth + wordWidth;
+                var (RowText, RowSize) = row;
 
-                        if (newRowWidth > maxWidth)
-                        {
-                            rowWidth = wordWidth;
-                            newRows.Add((new LinkedList<Word>(),
-                                new MutableTuple<float, float>(0, 0)));
-                        }
-                        else
-                        {
-                            rowWidth = newRowWidth;
-                        }
-
-
-                        var words = newRows.Last().RowText as LinkedList<Word>;
-                        words.AddLast(word);
-                    }
-                }
-            }
-
-            // Calculate row sizes
-            for (int i = 0; i < newRows.Count; i++)
-            {
-                var (RowText, RowSize) = newRows[i];
-
-                TrimRow(RowText as LinkedList<Word>);
-
+                // Calculate row sizes
                 var rowSize = GetRowSize(RowText);
                 RowSize.Item1 = rowSize.Item1;
                 RowSize.Item2 = rowSize.Item2;
 
-                // If the row is empty, remove it from the text
-                if (rowSize.Item1 <= 0)
+                // Find empty rows
+                var noWidth = RowSize.Item1 <= 0;
+                if (noWidth)
                 {
-                    newRows.RemoveAt(i);
+                    emptyRows.Add(row);
                 }
+            }
 
+            // Remove empty rows
+            foreach (var row in emptyRows)
+            {
+                newRows.Remove(row);
             }
 
             return newRows;
+        }
+
+        private void FitTextHorizontally(
+            List<(IEnumerable<Word> RowText, MutableTuple<float, float> RowSize)> rows,
+            int currentRowIndex,
+            LinkedList<(IEnumerable<Word> RowText, MutableTuple<float, float> RowSize)> newRows,
+            float maxWidth,
+            IList<Word> remainingWords)
+        {
+            var noMoreOriginalRows = currentRowIndex > rows.Count - 1;
+            var currentRowCopy = noMoreOriginalRows
+                ? new LinkedList<Word>()
+                : new LinkedList<Word>(rows[currentRowIndex].RowText);
+
+            TrimRow(currentRowCopy);
+
+            var noRemainingWords = remainingWords == null || remainingWords.Count() == 0;
+            if (noRemainingWords)
+            {
+                if (noMoreOriginalRows)
+                {
+                    // No more word parts, we are done! Break the recursion
+                    return;
+                }
+            }
+            else
+            {
+                // Add remaining words from the previous row
+                for (int i = remainingWords.Count - 1; i >= 0; i--)
+                {
+                    currentRowCopy.AddFirst(remainingWords[i]);
+                }
+            }
+
+            // Add words on the current row to the new row            
+            var lastNewRowText = newRows.Last.Value.RowText as LinkedList<Word>;
+            var newRemainingWords = new List<Word>();
+            float newRowWidth = 0;
+            int wordIndex = 0;
+            foreach (var word in currentRowCopy)
+            {
+                if (word != null)
+                {
+                    var wordWidth = word.Font.MeasureString(word.Text).X;
+                    var tmpRowWidth = newRowWidth + wordWidth;
+
+                    if (tmpRowWidth > maxWidth)
+                    {
+                        // Split at whitespaces and add the parts until no more fit
+                        var spaceWidth = word.Font.MeasureString(" ").X;
+                        var wordParts = word.Text.Split(null);
+                        int j;
+                        for (j = 0; j < wordParts.Length; j++)
+                        {
+                            var wordPart = wordParts[j];
+                            var wordPartWidth = word.Font.MeasureString(wordPart).X;
+                            var tmpRowWidth1 = newRowWidth + wordPartWidth;
+                            if (tmpRowWidth1 <= maxWidth)
+                            {
+                                // Add the word part since it fits on the current row
+                                lastNewRowText.AddLast(new Word(wordPart + " ", word.Font, word.Color));
+                                newRowWidth = tmpRowWidth1 + spaceWidth;
+                            }
+                            else
+                            {
+                                // No more word parts fit on the current row
+                                break;
+                            }
+                        }
+                        // The whitespace at the end of the last word of the row should not be there
+                        lastNewRowText.Last.Value.Text = lastNewRowText.Last.Value.Text.TrimEnd();
+                        newRowWidth -= spaceWidth;
+
+                        // Add the remaining parts into one word
+                        var remainingWordParts = "";
+                        while (j < wordParts.Length)
+                        {
+                            remainingWordParts += wordParts[j] + " ";
+                            j++;
+                        }
+
+                        // Union all left over word parts in one new Word
+                        var isRemainingParts = remainingWordParts.Length != 0;
+                        var nextWord = isRemainingParts
+                            ? new Word(remainingWordParts, word.Font, word.Color)
+                            : null;
+
+                        // Get remaining words on this row
+                        if (nextWord != null)
+                        {
+                            newRemainingWords.Add(nextWord);
+                        }
+                        var nextWordIndex = wordIndex + 1;
+                        if (nextWordIndex < currentRowCopy.Count)
+                        {
+                            var numRemainingWords = currentRowCopy.Count - nextWordIndex;
+                            newRemainingWords.AddRange(currentRowCopy.ToList().GetRange(nextWordIndex, numRemainingWords));
+                        }
+
+                        break;
+                    }
+                    else
+                    {
+                        // Adding the word does not exceed the max width
+                        newRowWidth = tmpRowWidth;
+                        lastNewRowText.AddLast(word);
+                    }
+                }
+
+                wordIndex++;
+            }
+
+            // Go to the next original row
+            newRows.AddLast((new LinkedList<Word>(), new MutableTuple<float, float>(0, 0)));
+            FitTextHorizontally(
+                rows,
+                currentRowIndex + 1,
+                newRows,
+                maxWidth,
+                newRemainingWords);
+
         }
 
         private void TrimRow(LinkedList<Word> row)

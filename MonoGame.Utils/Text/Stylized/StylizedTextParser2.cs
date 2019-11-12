@@ -39,7 +39,8 @@ namespace MonoGame.Utils.Text
             }
 
             // Otherwise, redo the rows
-            var newStylizedText = FitTextHorizontally(StylizedText, maxWidth);
+            var stylizedTextList = StylizedText as List<(IEnumerable<Word> RowText, MutableTuple<float, float> RowSize)>;
+            var newStylizedText = FitTextHorizontally(stylizedTextList, maxWidth);
             return (newStylizedText, GetTextSize(newStylizedText, RowSpacing));
         }
 
