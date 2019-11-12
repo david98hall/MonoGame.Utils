@@ -18,6 +18,13 @@ namespace MonoGame.Utils.Text
                 float maxWidth)
         {
             var newRows = new LinkedList<(IEnumerable<Word> RowText, MutableTuple<float, float>)>();
+
+            if (maxWidth <= 0)
+            {
+                // No text can fit within a max width of zero or smaller; return nothing
+                return newRows;
+            }
+
             newRows.AddFirst((new LinkedList<Word>(), new MutableTuple<float, float>(0, 0)));
 
             FitTextHorizontally(rows, 0, newRows, maxWidth, null);
@@ -26,6 +33,8 @@ namespace MonoGame.Utils.Text
             foreach (var row in newRows)
             {
                 var (RowText, RowSize) = row;
+
+                TrimRow(RowText as LinkedList<Word>);
 
                 // Calculate row sizes
                 var rowSize = GetRowSize(RowText);
@@ -116,6 +125,15 @@ namespace MonoGame.Utils.Text
                                 break;
                             }
                         }
+
+                        if (lastNewRowText.Last == null)
+                        {
+                            // No word parts were added (none of them fit within the max width)
+                            // Skip them and the rest of the text since 
+                            // they will never fit if only split at whitespaces
+                            return;
+                        }
+
                         // The whitespace at the end of the last word of the row should not be there
                         lastNewRowText.Last.Value.Text = lastNewRowText.Last.Value.Text.TrimEnd();
                         newRowWidth -= spaceWidth;
