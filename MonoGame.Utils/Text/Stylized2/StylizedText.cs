@@ -1,9 +1,7 @@
-﻿using MonoGame.Utils.Tuples;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace MonoGame.Utils.Text.Stylized2
@@ -133,12 +131,25 @@ namespace MonoGame.Utils.Text.Stylized2
         }
         private string[] defaultStyleIdentifier = new string[] { "default", "d" };
 
-        public StylizedText(string text, C defaultColor, F defaultFont)
+        public float MaxWidth
+        {
+            get => maxWidth;
+            set
+            {
+                maxWidth = value;
+                UpdateRows();
+            }
+        }
+        private float maxWidth;
+
+        public StylizedText(string text, C defaultColor, F defaultFont, float maxWidth = float.MaxValue, float rowSpacing = 3)
         {
             Alignment = TextAlignment.LEFT;
             this.text = text;
             this.defaultColor = defaultColor;
             this.defaultFont = defaultFont;
+            this.maxWidth = maxWidth;
+            this.rowSpacing = rowSpacing;
             UpdateRows();
         }
 
@@ -156,7 +167,7 @@ namespace MonoGame.Utils.Text.Stylized2
             Size = GetTextSize();
         }
 
-        private IEnumerable<(IEnumerable<TextPart<C, F>> TextParts, (float Width, float Height) RowSize)> ParseRows(float maxWidth = float.MaxValue)
+        private IEnumerable<(IEnumerable<TextPart<C, F>> TextParts, (float Width, float Height) RowSize)> ParseRows()
         {
             var stylizedRows = new LinkedList<LinkedList<TextPart<C, F>>>();
 
@@ -169,15 +180,66 @@ namespace MonoGame.Utils.Text.Stylized2
 
                 foreach (var textPartRow in textPartRows)
                 {
-                    // Create new row
-                    stylizedRows.AddLast(new LinkedList<TextPart<C, F>>());
-                    var currentRow = stylizedRows.Last.Value;
-
-                    currentRow.AddLast(new TextPart<C, F>(textPartRow, textPart.Color, textPart.Font));
+                    foreach (var fittedRow in FitTextPart(textPart, MaxWidth))
+                    {
+                        // Create new row and add to it
+                        stylizedRows.AddLast(new LinkedList<TextPart<C, F>>());
+                        var currentRow = stylizedRows.Last.Value;
+                        currentRow.AddLast(fittedRow);
+                    }
                 }
             }
 
             return stylizedRows.Select(r => (r as IEnumerable<TextPart<C, F>>, GetRowSize(r)));
+        }
+
+        private IEnumerable<TextPart<C, F>> FitTextPart(TextPart<C, F> textPart, float maxWidth)
+        {
+            if (!IsWider(textPart, maxWidth))
+            {
+                // Not wider than the max width, return the text part "as is"
+                return new TextPart<C, F>[] { GetTrimmedTextPart(textPart) };
+            }
+
+            var textPartRows = new LinkedList<TextPart<C, F>>();
+
+            var textPartRow = "";
+            foreach (var c in textPart.Text.ToCharArray())
+            {
+                var tmpPartRow = textPartRow + c;
+                if (IsWider(tmpPartRow, textPart.Font, maxWidth))
+                {
+                    textPartRows.AddLast(GetTrimmedTextPart(textPartRow, textPart.Color, textPart.Font));
+                    textPartRow = "" + c;
+                }
+                else
+                {
+                    textPartRow = tmpPartRow;
+                }
+            }
+            textPartRows.AddLast(GetTrimmedTextPart(textPartRow, textPart.Color, textPart.Font));
+
+            return textPartRows;
+        }
+
+        private TextPart<C, F> GetTrimmedTextPart(TextPart<C, F> textPart)
+        {
+            return GetTrimmedTextPart(textPart.Text, textPart.Color, textPart.Font);
+        }
+
+        private TextPart<C, F> GetTrimmedTextPart(string text, C color, F font)
+        {
+            return new TextPart<C, F>(text.Trim(), color, font);
+        }
+
+        private bool IsWider(string text, F font, float maxWidth)
+        {
+            return MeasureString(font, text).Width > maxWidth;
+        }
+
+        private bool IsWider(TextPart<C, F> textPart, float maxWidth)
+        {
+            return IsWider(textPart.Text, textPart.Font, maxWidth);
         }
 
         private IEnumerable<TextPart<C, F>> ParseText()
@@ -285,13 +347,13 @@ namespace MonoGame.Utils.Text.Stylized2
                 }
 
                 // Row Width
-                var wordSize = MeasureString(word.Font, word.Text);
-                rowWidth += wordSize.Width;
+                var (Width, Height) = MeasureString(word.Font, word.Text);
+                rowWidth += Width;
 
                 // Row Height
-                if (wordSize.Height > rowHeight)
+                if (Height > rowHeight)
                 {
-                    rowHeight = wordSize.Height;
+                    rowHeight = Height;
                 }
             }
 
