@@ -1,4 +1,6 @@
-﻿using MonoGame.Utils.Tuples;
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using MonoGame.Utils.Tuples;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +14,7 @@ namespace MonoGame.Utils.Text
         /// </summary>
         /// <param name="text">The text to parse.</param>
         /// <returns>The parsed text.</returns>
-        public (IEnumerable<(IEnumerable<Word> RowText, MutableTuple<float, float> RowSize)> Rows,
+        public (IEnumerable<(IEnumerable<TextPart<Color, SpriteFont>> RowText, MutableTuple<float, float> RowSize)> Rows,
             (float Width, float Height) TextSize)
             ParseText(string text)
         {
@@ -26,7 +28,7 @@ namespace MonoGame.Utils.Text
         /// <param name="text">The text to parse and fit.</param>
         /// <param name="maxWidth">The max width of the text.</param>
         /// <returns>The parsed and fitted text.</returns>
-        public (IEnumerable<(IEnumerable<Word> RowText, MutableTuple<float, float> RowSize)> Rows,
+        public (IEnumerable<(IEnumerable<TextPart<Color, SpriteFont>> RowText, MutableTuple<float, float> RowSize)> Rows,
             (float Width, float Height) TextSize)
             ParseAndFitTextHorizontally(string text, float maxWidth)
         {
@@ -39,12 +41,12 @@ namespace MonoGame.Utils.Text
             }
 
             // Otherwise, redo the rows
-            var stylizedTextList = StylizedText as List<(IEnumerable<Word> RowText, MutableTuple<float, float> RowSize)>;
+            var stylizedTextList = StylizedText as List<(IEnumerable<TextPart<Color, SpriteFont>> RowText, MutableTuple<float, float> RowSize)>;
             var newStylizedText = FitTextHorizontally(stylizedTextList, maxWidth);
             return (newStylizedText, GetTextSize(newStylizedText, RowSpacing));
         }
 
-        public IEnumerable<(IEnumerable<Word> RowText, MutableTuple<float, float> RowSize)>
+        public IEnumerable<(IEnumerable<TextPart<Color, SpriteFont>> RowText, MutableTuple<float, float> RowSize)>
             ParseTextRows(string text)
         {
             var rowCount = text.Count(t => t == NewLine) + 1;
@@ -52,11 +54,11 @@ namespace MonoGame.Utils.Text
 
             // Add empty lists and default tuples
             var stylizedText =
-                new List<(IEnumerable<Word> RowText, MutableTuple<float, float> RowSize)>(rowCount);
+                new List<(IEnumerable<TextPart<Color, SpriteFont>> RowText, MutableTuple<float, float> RowSize)>(rowCount);
             for (int i = 0; i < rowCount; i++)
             {
                 stylizedText.Add((
-                    new LinkedList<Word>(),
+                    new LinkedList<TextPart<Color, SpriteFont>>(),
                     new MutableTuple<float, float>(-1, -1)
                 ));
             }
@@ -71,8 +73,8 @@ namespace MonoGame.Utils.Text
                 foreach (var wordPart in wordParts)
                 {
                     // Add the word part on the correct row
-                    var textRow = stylizedText[rowIndex].RowText as LinkedList<Word>;
-                    textRow.AddLast(new Word(wordPart, word.Font, word.Color));
+                    var textRow = stylizedText[rowIndex].RowText as LinkedList<TextPart<Color, SpriteFont>>;
+                    textRow.AddLast(new TextPart<Color, SpriteFont>(wordPart, word.Color, word.Font));
 
                     // Go to the next row
                     rowIndex++;
@@ -96,7 +98,7 @@ namespace MonoGame.Utils.Text
                     word.Text = word.Text.Replace(EscapeCharacter + "]", "]");
                 }
 
-                TrimRow(RowText as LinkedList<Word>);
+                TrimRow(RowText as LinkedList<TextPart<Color, SpriteFont>>);
 
                 // Calculate each row size
                 var rowSize = GetRowSize(RowText);
@@ -114,13 +116,13 @@ namespace MonoGame.Utils.Text
             return stylizedText;
         }
 
-        public IEnumerable<Word> ParseWords(string text)
+        public IEnumerable<TextPart<Color, SpriteFont>> ParseWords(string text)
         {
-            return ParseWords(new Word(text, DefaultFont, DefaultColor));
+            return ParseWords(new TextPart<Color, SpriteFont>(text, DefaultColor, DefaultFont));
         }
 
         public static (float Width, float Height) GetTextSize(
-            IEnumerable<(IEnumerable<Word> RowText,
+            IEnumerable<(IEnumerable<TextPart<Color, SpriteFont>> RowText,
             MutableTuple<float, float> RowSize)> text,
             float rowSpacing)
         {
@@ -148,7 +150,7 @@ namespace MonoGame.Utils.Text
             return (textWidth, textHeight - rowSpacing);
         }
 
-        public static MutableTuple<float, float> GetRowSize(IEnumerable<Word> rowText)
+        public static MutableTuple<float, float> GetRowSize(IEnumerable<TextPart<Color, SpriteFont>> rowText)
         {
             float rowWidth = 0;
             float rowHeight = 0;

@@ -64,24 +64,6 @@ namespace MonoGame.Utils.Text
             COLOR, FONT, OPACITY
         }
 
-        public class Word
-        {
-
-            public string Text { get; set; }
-
-            public SpriteFont Font { get; set; }
-
-            public Color Color { get; set; }
-
-            public Word(string text, SpriteFont font, Color color)
-            {
-                Text = text;
-                Font = font;
-                Color = color;
-            }
-
-        }
-
     }
 
 }

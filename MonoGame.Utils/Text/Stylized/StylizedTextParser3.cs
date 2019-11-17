@@ -12,12 +12,12 @@ namespace MonoGame.Utils.Text
     {
 
         // Fits the text to a max width and remakes the rows if necessary
-        private IEnumerable<(IEnumerable<Word> RowText, MutableTuple<float, float> RowSize)>
+        private IEnumerable<(IEnumerable<TextPart<Color, SpriteFont>> RowText, MutableTuple<float, float> RowSize)>
             FitTextHorizontally(
-                List<(IEnumerable<Word> RowText, MutableTuple<float, float> RowSize)> rows,
+                List<(IEnumerable<TextPart<Color, SpriteFont>> RowText, MutableTuple<float, float> RowSize)> rows,
                 float maxWidth)
         {
-            var newRows = new LinkedList<(IEnumerable<Word> RowText, MutableTuple<float, float>)>();
+            var newRows = new LinkedList<(IEnumerable<TextPart<Color, SpriteFont>> RowText, MutableTuple<float, float>)>();
 
             if (maxWidth <= 0)
             {
@@ -25,16 +25,16 @@ namespace MonoGame.Utils.Text
                 return newRows;
             }
 
-            newRows.AddFirst((new LinkedList<Word>(), new MutableTuple<float, float>(0, 0)));
+            newRows.AddFirst((new LinkedList<TextPart<Color, SpriteFont>>(), new MutableTuple<float, float>(0, 0)));
 
             FitTextHorizontally(rows, 0, newRows, maxWidth, null);
 
-            var emptyRows = new HashSet<(IEnumerable<Word> RowText, MutableTuple<float, float> RowSize)>();
+            var emptyRows = new HashSet<(IEnumerable<TextPart<Color, SpriteFont>> RowText, MutableTuple<float, float> RowSize)>();
             foreach (var row in newRows)
             {
                 var (RowText, RowSize) = row;
 
-                TrimRow(RowText as LinkedList<Word>);
+                TrimRow(RowText as LinkedList<TextPart<Color, SpriteFont>>);
 
                 // Calculate row sizes
                 var rowSize = GetRowSize(RowText);
@@ -59,16 +59,16 @@ namespace MonoGame.Utils.Text
         }
 
         private void FitTextHorizontally(
-            List<(IEnumerable<Word> RowText, MutableTuple<float, float> RowSize)> rows,
+            List<(IEnumerable<TextPart<Color, SpriteFont>> RowText, MutableTuple<float, float> RowSize)> rows,
             int currentRowIndex,
-            LinkedList<(IEnumerable<Word> RowText, MutableTuple<float, float> RowSize)> newRows,
+            LinkedList<(IEnumerable<TextPart<Color, SpriteFont>> RowText, MutableTuple<float, float> RowSize)> newRows,
             float maxWidth,
-            IList<Word> remainingWords)
+            IList<TextPart<Color, SpriteFont>> remainingWords)
         {
             var noMoreOriginalRows = currentRowIndex > rows.Count - 1;
             var currentRowCopy = noMoreOriginalRows
-                ? new LinkedList<Word>()
-                : new LinkedList<Word>(rows[currentRowIndex].RowText);
+                ? new LinkedList<TextPart<Color, SpriteFont>>()
+                : new LinkedList<TextPart<Color, SpriteFont>>(rows[currentRowIndex].RowText);
 
             var noRemainingWords = remainingWords == null || remainingWords.Count() == 0;
             if (noRemainingWords)
@@ -89,8 +89,8 @@ namespace MonoGame.Utils.Text
             }
 
             // Add words on the current row to the new row            
-            var lastNewRowText = newRows.Last.Value.RowText as LinkedList<Word>;
-            var newRemainingWords = new List<Word>();
+            var lastNewRowText = newRows.Last.Value.RowText as LinkedList<TextPart<Color, SpriteFont>>;
+            var newRemainingWords = new List<TextPart<Color, SpriteFont>>();
             float newRowWidth = 0;
             int wordIndex = 0;
             foreach (var word in currentRowCopy)
@@ -114,7 +114,7 @@ namespace MonoGame.Utils.Text
                             if (tmpRowWidth1 <= maxWidth)
                             {
                                 // Add the word part since it fits on the current row
-                                lastNewRowText.AddLast(new Word(wordPart + " ", word.Font, word.Color));
+                                lastNewRowText.AddLast(new TextPart<Color, SpriteFont>(wordPart + " ", word.Color, word.Font));
                                 newRowWidth = tmpRowWidth1 + spaceWidth;
                             }
                             else
@@ -144,10 +144,10 @@ namespace MonoGame.Utils.Text
                             j++;
                         }
 
-                        // Union all left over word parts in one new Word
+                        // Union all left over word parts in one new TextPart<Color, SpriteFont>
                         var isRemainingParts = remainingWordParts.Length != 0;
                         var nextWord = isRemainingParts
-                            ? new Word(remainingWordParts, word.Font, word.Color)
+                            ? new TextPart<Color, SpriteFont>(remainingWordParts, word.Color, word.Font)
                             : null;
 
                         // Get remaining words on this row
@@ -176,7 +176,7 @@ namespace MonoGame.Utils.Text
             }
 
             // Go to the next original row
-            newRows.AddLast((new LinkedList<Word>(), new MutableTuple<float, float>(0, 0)));
+            newRows.AddLast((new LinkedList<TextPart<Color, SpriteFont>>(), new MutableTuple<float, float>(0, 0)));
             FitTextHorizontally(
                 rows,
                 currentRowIndex + 1,
@@ -186,18 +186,18 @@ namespace MonoGame.Utils.Text
 
         }
 
-        private void TrimRow(LinkedList<Word> row)
+        private void TrimRow(LinkedList<TextPart<Color, SpriteFont>> row)
         {
             TrimRow(row, true);
             TrimRow(row, false);
         }
 
-        private void TrimRow(LinkedList<Word> row, bool fromLeft)
+        private void TrimRow(LinkedList<TextPart<Color, SpriteFont>> row, bool fromLeft)
         {
             if (row.Count > 0)
             {
-                var endWord = new Word("", DefaultFont, DefaultColor);
-                Word currentWord;
+                var endWord = new TextPart<Color, SpriteFont>("", DefaultColor, DefaultFont);
+                TextPart<Color, SpriteFont> currentWord;
                 while (row.Count > 0)
                 {
                     // Remove word from row
@@ -227,7 +227,7 @@ namespace MonoGame.Utils.Text
                             wordText = wordText.TrimEnd();
                         }
 
-                        endWord = new Word(wordText, currentWord.Font, currentWord.Color);
+                        endWord = new TextPart<Color, SpriteFont>(wordText, currentWord.Color, currentWord.Font);
 
                         break;
                     }
@@ -246,9 +246,9 @@ namespace MonoGame.Utils.Text
             }
         }
 
-        private IEnumerable<Word> ParseWords(Word word)
+        private IEnumerable<TextPart<Color, SpriteFont>> ParseWords(TextPart<Color, SpriteFont> word)
         {
-            var stylizedWords = new List<Word>();
+            var stylizedWords = new List<TextPart<Color, SpriteFont>>();
 
             var startBraceCount = word.Text.Count(t => t == '{') - word.Text.Count(EscapeCharacter + "{");
             var endBraceCount = word.Text.Count(t => t == '}') - word.Text.Count(EscapeCharacter + "}");
@@ -278,7 +278,7 @@ namespace MonoGame.Utils.Text
                 else if (endOfBracedArea)
                 {
                     // Parse the words to the right of the braced area
-                    var rightPart = ParseWords(new Word(word.Text.Substring(i + 1), word.Font, word.Color));
+                    var rightPart = ParseWords(new TextPart<Color, SpriteFont>(word.Text.Substring(i + 1), word.Color, word.Font));
 
                     // Extract the style of the first word to the right of the braced area 
                     // since the left side will have it as its default style
@@ -286,9 +286,9 @@ namespace MonoGame.Utils.Text
                     var rightPartWord = rightPart.First();
 
                     // Parse the words to the left of the braced area with the extracted style as the default
-                    var leftWord = new Word(word.Text.Substring(0, latestStartBrace),
-                        rightPartWord.Font,
-                        rightPartWord.Color);
+                    var leftWord = new TextPart<Color, SpriteFont>(word.Text.Substring(0, latestStartBrace),
+                        rightPartWord.Color,
+                        rightPartWord.Font);
                     var leftPart = ParseWords(leftWord);
 
                     // Add the words to the left to the result
@@ -349,7 +349,7 @@ namespace MonoGame.Utils.Text
             return (lastStartBracket, lastEndBracket);
         }
 
-        private IEnumerable<Word> ParseStyle(string text, SpriteFont parentFont, Color parentColor)
+        private IEnumerable<TextPart<Color, SpriteFont>> ParseStyle(string text, SpriteFont parentFont, Color parentColor)
         {
             // Try to look for the last style block
             var (LastStartBracket, LastEndBracket) = FindLastStyleBlock(text);
@@ -359,7 +359,7 @@ namespace MonoGame.Utils.Text
             // If there is no style block in the text, return the text with the style of its parent text
             if (LastStartBracket < 0 || LastEndBracket < 0)
             {
-                return new Word[] { new Word(text, parentFont, parentColor) };
+                return new TextPart<Color, SpriteFont>[] { new TextPart<Color, SpriteFont>(text, parentColor, parentFont) };
             }
 
             // Extract styles
@@ -367,7 +367,7 @@ namespace MonoGame.Utils.Text
             var styles = Regex.Replace(styleText, @"\s", "").Split(',');
             if (styles.Length == 0)
             {
-                return new Word[] { new Word(text, parentFont, parentColor) };
+                return new TextPart<Color, SpriteFont>[] { new TextPart<Color, SpriteFont>(text, parentColor, parentFont) };
             }
 
             // Try to extract styles
@@ -387,13 +387,13 @@ namespace MonoGame.Utils.Text
 
                 // Add the text left of the style block and any right text if there is any
                 var partCount = rightPartExists ? 2 : 1;
-                var stylizedParts = new Word[partCount];
-                stylizedParts[0] = new Word(leftPart, Font, Color);
+                var stylizedParts = new TextPart<Color, SpriteFont>[partCount];
+                stylizedParts[0] = new TextPart<Color, SpriteFont>(leftPart, Color, Font);
 
                 if (rightPartExists)
                 {
                     var rightPart = text.Substring(rightIndex);
-                    stylizedParts[1] = new Word(rightPart, DefaultFont, DefaultColor);
+                    stylizedParts[1] = new TextPart<Color, SpriteFont>(rightPart, DefaultColor, DefaultFont);
                 }
                 #endregion
 
@@ -404,7 +404,7 @@ namespace MonoGame.Utils.Text
             }
 
             // No styles found, return the original text
-            return new Word[] { new Word(text, parentFont, parentColor) };
+            return new TextPart<Color, SpriteFont>[] { new TextPart<Color, SpriteFont>(text, parentColor, parentFont) };
         }
 
         private (SpriteFont Font, Color Color) ExtractStyles(string[] styles, SpriteFont parentFont, Color parentColor)
