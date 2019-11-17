@@ -89,7 +89,7 @@ namespace MonoGame.Utils.Text.Stylized2
         }
         private float rowSpacing;
 
-        public char NewLineChar
+        public char NewLine
         {
             get => newLineChar;
             set
@@ -99,6 +99,28 @@ namespace MonoGame.Utils.Text.Stylized2
             }
         }
         private char newLineChar = '\n';
+
+        public char StyleSeparator
+        {
+            get => styleSeparator;
+            set
+            {
+                styleSeparator = value;
+                UpdateRows();
+            }
+        }
+        private char styleSeparator = ',';
+
+        public char StyleEquality
+        {
+            get => styleEquality;
+            set
+            {
+                styleEquality = value;
+                UpdateRows();
+            }
+        }
+        private char styleEquality = '=';
 
         public string[] DefaultStyleIdentifiers
         {
@@ -141,7 +163,7 @@ namespace MonoGame.Utils.Text.Stylized2
             foreach (var textPart in ParseText())
             {
                 var textPartRows = textPart.Text
-                    .Split(NewLineChar)
+                    .Split(NewLine)
                     .Select(s => s.Trim())
                     .Where(s => s.Length > 0);
 
@@ -160,7 +182,7 @@ namespace MonoGame.Utils.Text.Stylized2
 
         private IEnumerable<TextPart<C, F>> ParseText()
         {
-            var text = Text.Trim().Replace("\r\n", "" + NewLineChar).Replace('\r', NewLineChar);
+            var text = Text.Trim().Replace("\r\n", "" + NewLine).Replace('\r', NewLine);
             var stylizedText = new LinkedList<TextPart<C, F>>();
             var styleBlockCollection = Regex.Matches(text, styleBlockPattern);
 
@@ -315,12 +337,12 @@ namespace MonoGame.Utils.Text.Stylized2
                 return (null, DefaultFont, DefaultOpacity);
             }
 
-            var styleStrings = Regex.Replace(styleBlock, @"\s", "").Split(',');
+            var styleStrings = Regex.Replace(styleBlock, @"\s", "").Split(StyleSeparator);
             foreach (var s in styleStrings)
             {
                 try
                 {
-                    var styleName = s.Substring(0, s.LastIndexOf('='));
+                    var styleName = s.Substring(0, s.IndexOf(StyleEquality));
                     var styleValue = s.Substring(styleName.Length + 1, s.Length - styleName.Length - 1);
 
                     if (Enum.TryParse(styleName.ToUpper(), out Style style))
