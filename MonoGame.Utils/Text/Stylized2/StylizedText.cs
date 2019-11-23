@@ -31,7 +31,7 @@ namespace MonoGame.Utils.Text.Stylized2
             set
             {
                 defaultColor = value;
-                UpdateRows();
+                PropertyApplyChanges();
             }
         }
         private C defaultColor;
@@ -45,7 +45,7 @@ namespace MonoGame.Utils.Text.Stylized2
             set
             {
                 defaultFont = value;
-                UpdateRows();
+                PropertyApplyChanges();
             }
         }
         private F defaultFont;
@@ -63,7 +63,7 @@ namespace MonoGame.Utils.Text.Stylized2
                     throw new Exception("The opacity has to be in the range [0, 1]");
                 }
                 defaultOpacity = value;
-                UpdateRows();
+                PropertyApplyChanges();
             }
         }
         private float defaultOpacity = 1;
@@ -77,7 +77,7 @@ namespace MonoGame.Utils.Text.Stylized2
             set
             {
                 text = value;
-                UpdateRows();
+                PropertyApplyChanges();
             }
         }
         private string text;
@@ -110,7 +110,7 @@ namespace MonoGame.Utils.Text.Stylized2
             set
             {
                 newLineChar = value;
-                UpdateRows();
+                PropertyApplyChanges();
             }
         }
         private char newLineChar = '\n';
@@ -124,7 +124,7 @@ namespace MonoGame.Utils.Text.Stylized2
             set
             {
                 styleSeparator = value;
-                UpdateRows();
+                PropertyApplyChanges();
             }
         }
         private char styleSeparator = ',';
@@ -138,7 +138,7 @@ namespace MonoGame.Utils.Text.Stylized2
             set
             {
                 styleEquality = value;
-                UpdateRows();
+                PropertyApplyChanges();
             }
         }
         private char styleEquality = '=';
@@ -152,7 +152,7 @@ namespace MonoGame.Utils.Text.Stylized2
             set
             {
                 defaultStyleIdentifier = value;
-                UpdateRows();
+                PropertyApplyChanges();
             }
         }
         private string[] defaultStyleIdentifier = new string[] { "default", "d" };
@@ -166,10 +166,12 @@ namespace MonoGame.Utils.Text.Stylized2
             set
             {
                 maxWidth = value;
-                UpdateRows();
+                PropertyApplyChanges();
             }
         }
         private float maxWidth;
+        
+        public bool InstantlyApplyChanges { get; set; }
         #endregion
 
         // Stylized rows in the text
@@ -177,6 +179,11 @@ namespace MonoGame.Utils.Text.Stylized2
 
         // The Regex pattern for identifying style blocks in the raw text
         private static readonly string styleBlockPattern = @"\[[a-zA-Z0-9=,.\s]+\]";
+
+        public StylizedText()
+        {
+            InstantlyApplyChanges = false;
+        }
 
         /// <summary>
         /// Sets values and parses the passed raw text.
@@ -187,14 +194,27 @@ namespace MonoGame.Utils.Text.Stylized2
         /// <param name="maxWidth">The max width of this text (new rows are added if a row's width exceeds this).</param>
         /// <param name="rowSpacing">The spacing between rows in this text.</param>
         public StylizedText(string text, C defaultColor, F defaultFont, float maxWidth = float.MaxValue, float rowSpacing = 3)
+            : this(defaultColor, defaultFont, maxWidth, rowSpacing)
+        {
+            this.text = text;
+            ApplyChanges();
+        }
+
+        /// <summary>
+        /// Sets default values.
+        /// </summary>
+        /// <param name="defaultColor">The text color if nothing else is specified.</param>
+        /// <param name="defaultFont">The text font if nothing else is specified.</param>
+        /// <param name="maxWidth">The max width of this text (new rows are added if a row's width exceeds this).</param>
+        /// <param name="rowSpacing">The spacing between rows in this text.</param>
+        public StylizedText(C defaultColor, F defaultFont, float maxWidth = float.MaxValue, float rowSpacing = 3)
+            : this()
         {
             Alignment = TextAlignment.LEFT;
-            this.text = text;
             this.defaultColor = defaultColor;
             this.defaultFont = defaultFont;
             this.maxWidth = maxWidth;
             this.rowSpacing = rowSpacing;
-            UpdateRows();
         }
 
         #region Abstract
@@ -231,8 +251,16 @@ namespace MonoGame.Utils.Text.Stylized2
         #endregion
 
         #region Parsing
+        private void PropertyApplyChanges()
+        {
+            if (InstantlyApplyChanges)
+            {
+                ApplyChanges();
+            }
+        }
+
         // Parses rows and updates the text size
-        private void UpdateRows()
+        public void ApplyChanges()
         {
             rows = ParseRows();
             Size = GetTextSize();
